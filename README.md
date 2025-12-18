@@ -1,11 +1,32 @@
+# Sippy — Cup Habit Tracker with Budget
 
-  # Cup Habit App UI Design
+Sippy is a cute cup-style habit tracker for logging **coffee / bubble tea / other drinks**, with simple **budget tracking** to help you stay mindful of daily spending.
 
-  This is a code bundle for Cup Habit App UI Design. The original project is available at https://www.figma.com/design/ungPUrrQfVywMOvoJ1YIUU/Cup-Habit-App-UI-Design.
+---
 
-  ## Running the code
+## Features
+- Log drinks (Coffee / Bubble Tea / Other)
+- Daily cup fill progress (visual cup UI)
+- Budget-aware tracking (track spending by drink entries)
+- Local storage persistence (keeps your data in the browser)
 
-  Run `npm i` to install the dependencies.
+---
 
-  Run `npm run dev` to start the development server.
+## Tech Stack
+- Vite + React
+- TypeScript
+- Tailwind CSS
+
+---
+
+## Getting Started
+
+### 1) Install dependencies
+npm install
+### 2) Run locally
+npm run dev
+### 3) Build for production
+npm run build
+
+
   
