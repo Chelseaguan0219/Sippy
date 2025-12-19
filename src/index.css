@@ -170,7 +170,6 @@
 }
 
 
-
 @layer base {
   *, :after, :before, ::backdrop {
     box-sizing: border-box;
@@ -2443,4 +2442,11 @@ html {
 @property --tw-ease {
   syntax: "*";
   inherits: false
+}
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
 }

@@ -227,7 +227,7 @@ export function OverviewScreen() {
 
 
   return (
-    <div className="min-h-full flex flex-col px-4 py-4 pb-28">
+    <div className="flex flex-col px-4 py-4 min-h-full">
       {/* Header */}
       <h1 className="text-2xl mb-4 text-center">Overview</h1>
 

@@ -153,12 +153,12 @@ export function StoreScreen() {
         </button>
       </div>
       {/* Category Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-2 mb-6 overflow-x-hidden pb-2">
         {(['classic', 'special', 'limited'] as CupCategory[]).map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-6 py-2.5 rounded-full whitespace-nowrap transition-all capitalize font-medium ${selectedCategory === category
+            className={`px-6 py-2.5 rounded-full whitespace-nowrap transition-all capitalize font-medium flex-shrink-0 ${selectedCategory === category
                 ? 'bg-gradient-to-r from-orange-400 to-pink-500 text-white shadow-md'
                 : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50'
               }`}
@@ -169,7 +169,7 @@ export function StoreScreen() {
       </div>
 
       {/* Cup Grid */}
-      <div className="flex-1 overflow-y-auto pb-4 pr-1">
+      <div className="flex-1 pb-4">
         <div className="grid grid-cols-2 gap-4">
           {filteredCups.map((cup) => (
             <div
@@ -188,7 +188,7 @@ export function StoreScreen() {
 
               {/* Price / Owned Badge */}
               {cup.owned ? (
-                <div className="w-full py-2.5 rounded-xl bg-green-50 text-green-600 text-sm font-medium text-center border border-green-100">
+                <div className="w-full py-2 rounded-xl bg-green-50 text-green-600 text-sm font-medium text-center border border-green-100">
                   Owned
                 </div>
               ) : (
