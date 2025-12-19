@@ -113,7 +113,7 @@ export function AddDrinkModal({ onClose, onAdd, initialDate }: AddDrinkModalProp
         {/* Drink Name Input (Optional) - Only for Coffee/Bubble Tea */}
         {drinkType !== 'other' && (
           <div className="mb-5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">Name (Optional)</label>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">Name/Brand (Optional)</label>
             <input
               type="text"
               value={drinkName}

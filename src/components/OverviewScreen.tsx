@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Coffee, CircleDot, CupSoda, Coins } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Coffee, CircleDot, CupSoda, Coins, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { drinkStore, DrinkLog } from '../utils/drinkStore';
 import { AddDrinkModal } from './AddDrinkModal';
@@ -119,6 +119,86 @@ export function OverviewScreen() {
   const totalSpent = filteredLogs.reduce((sum, log) => sum + log.amount, 0);
   const avgPerCup = totalCups > 0 ? totalSpent / totalCups : 0;
 
+  // Compute Top 3 categories based on filteredLogs (respects viewMode)
+  const topCategories = useMemo(() => {
+    if (filteredLogs.length === 0) {
+      return [];
+    }
+
+    // Count by category (type)
+    const categoryCounts = new Map<'COFFEE' | 'BUBBLE' | 'OTHER', number>();
+    filteredLogs.forEach(log => {
+      const existing = categoryCounts.get(log.type) || 0;
+      categoryCounts.set(log.type, existing + 1);
+    });
+
+    const typeLabels = {
+      'COFFEE': 'Coffee',
+      'BUBBLE': 'Bubble Tea',
+      'OTHER': 'Other',
+    };
+
+    // Convert to array, sort by count desc, take top 3
+    return Array.from(categoryCounts.entries())
+      .map(([type, count]) => ({
+        type,
+        label: typeLabels[type],
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [filteredLogs]);
+
+  const maxCount = Math.max(...topCategories.map(c => Number(c.count) || 0), 1);
+
+  // Compute top names by category based on filteredLogs (respects viewMode, only logs with name/customName)
+  const topNamesByType = useMemo(() => {
+    const result = new Map<'COFFEE' | 'BUBBLE' | 'OTHER', Array<{ name: string; count: number }>>();
+    result.set('COFFEE', []);
+    result.set('BUBBLE', []);
+    result.set('OTHER', []);
+
+    // Helper to get name from log (only if user provided)
+    const getName = (log: DrinkLog): string | null => {
+      if (log.name && log.name.trim()) return log.name.trim();
+      if (log.customName && log.customName.trim()) return log.customName.trim();
+      return null;
+    };
+
+    // Group by type and normalized name (lowercase for grouping, preserve original casing)
+    const grouped = new Map<string, Map<string, { count: number; originalName: string }>>();
+
+    filteredLogs.forEach(log => {
+      const name = getName(log);
+      if (!name) return; // Skip logs without name/customName
+
+      if (!grouped.has(log.type)) {
+        grouped.set(log.type, new Map());
+      }
+      const typeMap = grouped.get(log.type)!;
+      const normalizedKey = name.toLowerCase();
+      const existing = typeMap.get(normalizedKey);
+
+      if (existing) {
+        existing.count += 1;
+      } else {
+        typeMap.set(normalizedKey, { count: 1, originalName: name });
+      }
+    });
+
+    // Convert to arrays, sort and take top 3 for each type
+    grouped.forEach((nameMap, type) => {
+      const names = Array.from(nameMap.values())
+        .map(({ originalName, count }) => ({ name: originalName, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+
+      result.set(type as 'COFFEE' | 'BUBBLE' | 'OTHER', names);
+    });
+
+    return result;
+  }, [filteredLogs]);
+
   // Calendar Data (Always for currentMonth)
   const getCalendarData = (day: number) => {
     const dateStr = drinkStore.formatDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
@@ -132,6 +212,19 @@ export function OverviewScreen() {
   };
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const [expandedType, setExpandedType] = useState<'COFFEE' | 'BUBBLE' | 'OTHER' | null>(null);
+
+  // Auto-collapse expanded category if it has no names in current filteredLogs
+  useEffect(() => {
+    if (expandedType) {
+      const topNames = topNamesByType.get(expandedType) || [];
+      if (topNames.length === 0) {
+        setExpandedType(null);
+      }
+    }
+  }, [expandedType, topNamesByType]);
+
+
 
   return (
     <div className="min-h-full flex flex-col px-4 py-4 pb-28">
@@ -226,7 +319,7 @@ export function OverviewScreen() {
                   {hasData && (() => {
                     const iconCount = (hasCoffee ? 1 : 0) + (hasBubble ? 1 : 0) + (hasOther ? 1 : 0);
                     const hasAllThree = hasCoffee && hasBubble && hasOther;
-                    
+
                     // If all three icons, use two-row layout (Bubble on top, Coffee + Other on bottom)
                     if (hasAllThree) {
                       return (
@@ -249,7 +342,7 @@ export function OverviewScreen() {
                         </div>
                       );
                     }
-                    
+
                     // If only two icons, display them in a single row
                     return (
                       <div className="flex items-center justify-center gap-0.5 -mt-0.6">
@@ -280,7 +373,7 @@ export function OverviewScreen() {
       </div>
 
       {/* Summary Card */}
-      <div className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-3xl p-6 shadow-sm border border-orange-100">
+      <div className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-3xl p-6 shadow-sm border border-orange-100 mb-6">
         <h3 className="text-gray-600 mb-4 font-medium capitalize">
           {viewMode === 'day' ? 'Today' : viewMode === 'week' ? 'This Week' : viewMode === 'month' ? 'This Month' : 'This Year'}
         </h3>
@@ -298,6 +391,157 @@ export function OverviewScreen() {
             <span className="text-purple-600 font-bold text-lg">${avgPerCup.toFixed(2)}</span>
           </div>
         </div>
+      </div>
+
+      {/* Top 3 Card */}
+      <div className="rounded-3xl bg-white/70 border border-white/60 shadow-sm backdrop-blur-sm mb-6 overflow-hidden">
+        {/* Content */}
+        {topCategories.length === 0 ? (
+          <div className="px-6 pb-6">
+            <p className="text-gray-400 text-sm text-center py-8">
+              No drinks logged {viewMode === 'day' ? 'today' : viewMode === 'week' ? 'this week' : viewMode === 'month' ? 'this month' : 'this year'} yet
+            </p>
+          </div>
+        ) : (
+          <div>
+            {topCategories.map((category, index) => {
+              const raw = (Number(category.count) || 0) / maxCount;
+              const progress = Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 0;
+              const topNames = topNamesByType.get(category.type) || [];
+              const hasNamesToExpand = topNames.length > 0;
+
+              // Get icon based on type (matching AddDrinkModal)
+              const getIcon = () => {
+                if (category.type === 'COFFEE') {
+                  return <Coffee size={20} className="text-orange-500" />;
+                } else if (category.type === 'BUBBLE') {
+                  return <CircleDot size={20} className="text-pink-500" />;
+                } else {
+                  return <CupSoda size={20} className="text-blue-500" />;
+                }
+              };
+
+              const isExpanded = expandedType === category.type;
+
+              return (
+                <div key={category.type}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (hasNamesToExpand) {
+                        setExpandedType(isExpanded ? null : category.type);
+                      }
+                    }}
+                    disabled={!hasNamesToExpand}
+                    className={`w-full p-0 bg-transparent flex items-center justify-start gap-3 py-4 px-6 !text-left ${
+                      hasNamesToExpand ? '' : 'cursor-default'
+                    }`}
+                    style={{ textAlign: 'left' }}
+                  >
+                    {/* Left: Icon */}
+                    <div className="flex-shrink-0 mt-[2px]">
+                      <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center">
+                        {getIcon()}
+                      </div>
+                    </div>
+
+                    {/* Middle: Name + Progress bar */}
+                    <div className="flex-1 min-w-0 !text-left">
+                      <div className="text-[17px] font-semibold text-gray-900 truncate leading-none">
+                        {category.label}
+                      </div>
+
+                      {/* Progress (colored bar only) */}
+                      <div className="mt-3">
+                        <div
+                          style={{
+                            height: 5,
+                            width: `${progress * 100}%`,
+                            minWidth: progress > 0 ? 14 : 0,
+                            background:
+                              category.type === 'COFFEE'
+                                ? '#F97316'
+                                : category.type === 'BUBBLE'
+                                  ? '#EC4899'
+                                  : '#3B82F6',
+                            borderRadius: 9999,
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.10)',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right: Count + Chevron (always shown) */}
+                    <div className="flex items-center gap-2 flex-shrink-0 mt-[1px]">
+                      <span className="text-sm text-gray-400 whitespace-nowrap">
+                        {category.count} {category.count === 1 ? 'cup' : 'cups'}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp size={18} className="text-gray-400" />
+                      ) : (
+                        <ChevronDown size={18} className="text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Expanded content */}
+                  {isExpanded && hasNamesToExpand && (() => {
+                    const namesMaxCount = Math.max(...topNames.map(n => n.count), 1);
+                    const progressColor = category.type === 'COFFEE' ? '#F97316' : category.type === 'BUBBLE' ? '#EC4899' : '#3B82F6';
+
+                    return (
+                      <div className="bg-white/40">
+                        {topNames.map((nameItem, nameIndex) => {
+                          const nameProgress = nameItem.count / namesMaxCount;
+                          return (
+                            <div key={`${category.type}-${nameItem.name}-${nameIndex}`}>
+                              <div className="flex items-center gap-3 py-2.5 px-6">
+                                {/* Spacer to align with Name text (icon width 40px + gap 12px = 52px) */}
+                                <div className="flex-shrink-0" style={{ width: 40 }}></div>
+                                {/* Name + Progress */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-700 truncate leading-none">
+                                    {nameItem.name.charAt(0).toUpperCase() + nameItem.name.slice(1)}
+                                  </div>
+                                  {/* Optional: thin progress bar (colored bar only) */}
+                                  <div className="mt-1.5">
+                                    <div
+                                      style={{
+                                        height: 3,
+                                        width: `${nameProgress * 100}%`,
+                                        minWidth: nameProgress > 0 ? 8 : 0,
+                                        background: progressColor,
+                                        borderRadius: 9999,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Count */}
+                                <div className="flex-shrink-0">
+                                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                                    {nameItem.count} {nameItem.count === 1 ? 'cup' : 'cups'}
+                                  </span>
+                                </div>
+                              </div>
+                              {nameIndex < topNames.length - 1 && (
+                                <div className="border-t border-gray-200/40" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
+                  {index < topCategories.length - 1 && <div className="border-t border-gray-200/60" />}
+                </div>
+
+              );
+
+            })}
+          </div>
+        )
+        }
       </div>
 
       {/* Add Drink Modal */}
