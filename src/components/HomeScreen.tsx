@@ -118,6 +118,14 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
 
   const handleAddDrink = (type: 'coffee' | 'bubble' | 'other', price: number, name?: string, customName?: string, date?: string) => {
     const logType = type === 'coffee' ? 'COFFEE' : type === 'bubble' ? 'BUBBLE' : 'OTHER';
+    
+    // Calculate total spending after adding this drink
+    const totalSpendingAfter = monthSpent + price;
+    const isOverBudget = monthlyBudget && monthlyBudget > 0 && totalSpendingAfter > monthlyBudget;
+    
+    // Determine coin reward: 20 if over budget, 100 if within budget
+    const coinReward = isOverBudget ? 20 : 100;
+    
     drinkStore.addLog({
       type: logType,
       amount: price,
@@ -125,12 +133,15 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
       name: type !== 'other' ? name : undefined,
       customName: type === 'other' ? customName : undefined
     });
-    // Add 100 coins when adding a drink
-    coinStore.addCoins(100);
-    toast.success("You've got 100 coins!", {
+    
+    // Add coins based on budget status
+    coinStore.addCoins(coinReward);
+    
+    // Show toast with appropriate message
+    toast.success(`You've got ${coinReward} coins!`, {
       icon: (
-        <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center shadow-sm">
-          <Coins size={12} className="text-yellow-700" />
+        <div className={`w-5 h-5 rounded-full ${isOverBudget ? 'bg-orange-400' : 'bg-yellow-400'} flex items-center justify-center shadow-sm`}>
+          <Coins size={12} className={isOverBudget ? 'text-orange-700' : 'text-yellow-700'} />
         </div>
       ),
       duration: 1600
@@ -142,13 +153,30 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
 
   // Calculate progress percentage
   const progressPercent = monthlyBudget && monthlyBudget > 0
-    ? Math.min((monthSpent / monthlyBudget) * 100, 100)
+    ? (monthSpent / monthlyBudget) * 100
     : 0;
 
   // Calculate remaining balance
   const remainingBalance = monthlyBudget && monthlyBudget > 0
     ? Math.max(0, monthlyBudget - monthSpent)
     : null;
+
+  // Get progress bar color based on budget status
+  const getProgressColor = () => {
+    if (progressPercent <= 80) {
+      // Safe: green/blue-green
+      return '#10b981'; // emerald-500 or use '#06b6d4' for cyan
+    } else if (progressPercent <= 100) {
+      // Warning: orange
+      return '#F1C818'; 
+    } else {
+      // Danger: red
+      return '#f97316'; // red-500
+    }
+  };
+
+  // Calculate display width (cap at 100% for visual, but allow >100% for color)
+  const displayWidth = Math.min(progressPercent, 100);
 
   return (
     <div className="h-full flex flex-col px-8 py-6 relative bg-transparent">
@@ -201,11 +229,11 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
               <div
                 style={{
                   height: '100%',
-                  backgroundColor: '#facc15',
-                  width: `${Math.max(0, Math.min(progressPercent, 100))}%`,
+                  backgroundColor: getProgressColor(),
+                  width: `${Math.max(0, displayWidth)}%`,
                   minWidth: progressPercent > 0 ? 12 : 0,
                   borderRadius: 9999,
-                  transition: 'width 300ms ease',
+                  transition: 'width 300ms ease, background-color 300ms ease',
                 }}
               />
             </div>

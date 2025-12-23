@@ -137,7 +137,7 @@ export function StoreScreen() {
   })).filter((cup) => cup.category === selectedCategory);
 
   return (
-    <div className="h-full flex flex-col px-6 py-4">
+    <div className="flex flex-col px-6 py-4 min-h-full">
       {/* Header with Coin Balance */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">Cup Store</h1>
@@ -212,7 +212,7 @@ export function StoreScreen() {
       {/* Help Text */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 mt-4 border border-blue-100">
         <p className="text-xs text-center text-blue-600/80 leading-relaxed font-medium">
-          💡 Collect coins by logging your drinks and staying within your budget
+          💡 Stay on budget to earn more coins — go over and you’ll earn fewer today
         </p>
       </div>
     </div>

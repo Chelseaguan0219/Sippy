@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { drinkStore, DrinkLog } from '../utils/drinkStore';
 import { AddDrinkModal } from './AddDrinkModal';
 import { coinStore } from '../utils/coinStore';
+import { budgetStore } from '../utils/budgetStore';
 
 type ViewMode = 'day' | 'week' | 'month' | 'year';
 
@@ -13,9 +14,15 @@ export function OverviewScreen() {
   const [logs, setLogs] = useState<DrinkLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
+  const [monthSpent, setMonthSpent] = useState(0);
 
   useEffect(() => {
-    const loadLogs = () => setLogs(drinkStore.getLogs());
+    const loadLogs = () => {
+      setLogs(drinkStore.getLogs());
+      setMonthlyBudget(budgetStore.getMonthlyBudget());
+      setMonthSpent(drinkStore.getCurrentMonthSpent());
+    };
     loadLogs();
 
     // Listen for storage events (e.g. added from Home screen)
@@ -32,6 +39,8 @@ export function OverviewScreen() {
   // Update logs when component mounts (in case navigation happens)
   useEffect(() => {
     setLogs(drinkStore.getLogs());
+    setMonthlyBudget(budgetStore.getMonthlyBudget());
+    setMonthSpent(drinkStore.getCurrentMonthSpent());
   }, []);
 
   // Handler for day cell click
@@ -44,6 +53,14 @@ export function OverviewScreen() {
   // Handler for adding drink from modal
   const handleAddDrink = (type: 'coffee' | 'bubble' | 'other', price: number, name?: string, customName?: string, date?: string) => {
     const logType = type === 'coffee' ? 'COFFEE' : type === 'bubble' ? 'BUBBLE' : 'OTHER';
+    
+    // Calculate total spending after adding this drink
+    const totalSpendingAfter = monthSpent + price;
+    const isOverBudget = monthlyBudget && monthlyBudget > 0 && totalSpendingAfter > monthlyBudget;
+    
+    // Determine coin reward: 20 if over budget, 100 if within budget
+    const coinReward = isOverBudget ? 20 : 100;
+    
     drinkStore.addLog({
       type: logType,
       amount: price,
@@ -51,13 +68,19 @@ export function OverviewScreen() {
       name: type !== 'other' ? name : undefined,
       customName: type === 'other' ? customName : undefined
     });
-    // Add 100 coins when adding a drink
-    coinStore.addCoins(100);
-    toast.success("You've got 100 coins!", {
-      icon: <Coins size={20} className="text-yellow-600" />,
+    
+    // Add coins based on budget status
+    coinStore.addCoins(coinReward);
+    
+    // Show toast with appropriate message
+    toast.success(`You've got ${coinReward} coins!`, {
+      icon: <Coins size={20} className={isOverBudget ? 'text-orange-600' : 'text-yellow-600'} />,
     });
-    // Refresh logs
+    
+    // Refresh logs and budget data
     setLogs(drinkStore.getLogs());
+    setMonthlyBudget(budgetStore.getMonthlyBudget());
+    setMonthSpent(drinkStore.getCurrentMonthSpent());
     setIsAddModalOpen(false);
     setSelectedDate(null);
   };
