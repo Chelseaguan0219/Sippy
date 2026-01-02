@@ -22,11 +22,14 @@ export function AddDrinkModal({ onClose, onAdd, initialDate }: AddDrinkModalProp
 
   const handleAdd = () => {
     const priceNum = parseFloat(price);
-    if (priceNum && priceNum > 0) {
+    if (!Number.isNaN(priceNum) && priceNum >= 0) {
       const trimmedCustomName = drinkType === 'other' ? customName.trim() || undefined : undefined;
       onAdd(drinkType, priceNum, drinkName || undefined, trimmedCustomName, initialDate);
     }
   };
+
+  const parsed = parseFloat(price);
+  const isValidPrice = !Number.isNaN(parsed) && parsed >= 0;
 
   // Format date for display
   const getTitle = () => {
@@ -142,7 +145,7 @@ export function AddDrinkModal({ onClose, onAdd, initialDate }: AddDrinkModalProp
         <div>
           <button
             onClick={handleAdd}
-            disabled={!price || parseFloat(price) <= 0}
+            disabled={!isValidPrice}
             className="w-full bg-gradient-to-r from-orange-400 to-pink-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-orange-200 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed active:scale-95 transition-all hover:brightness-105"
           >
             Add Drink

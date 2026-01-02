@@ -213,3 +213,8 @@ html {
     transform: translateY(0) scale(1);
   }
 }
+
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}

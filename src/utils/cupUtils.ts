@@ -12,7 +12,7 @@ export interface CupData {
 
 export const mockCups: CupData[] = [
   { id: 1, name: 'Classic White', price: 0, category: 'classic', color: '#FFFFFF', gradient: 'from-amber-50 to-amber-100' },
-  { id: 2, name: 'Minimal Glass', price: 800, category: 'classic', color: '#E0F2FE', gradient: 'from-sky-50 to-sky-100' },
+  { id: 2, name: 'Sky Blue', price: 800, category: 'classic', color: '#E0F2FE', gradient: 'from-sky-50 to-sky-100' },
   { id: 3, name: 'Peach Blush', price: 1000, category: 'classic', color: '#FECACA', gradient: 'from-orange-100 to-rose-200' },
   { id: 4, name: 'Matcha Cup', price: 1200, category: 'classic', color: '#BBF7D0', gradient: 'from-green-100 to-emerald-200' },
   { id: 5, name: 'Lavender Dream', price: 1500, category: 'special', color: '#DDD6FE', gradient: 'from-purple-100 to-violet-200' },
@@ -78,7 +78,7 @@ export function cupIdToSkin(cupId: number): CupSkin {
         straw: '#fda4af',
         glass: '#fef3c7',
         liquid: '#fcd34d',
-        lid: '#ffffff'
+        lid: '#F1E8D8' // Match Classic White liquid color
       },
       liquidGradient: {
         from: '#f59e0b',
@@ -91,13 +91,17 @@ export function cupIdToSkin(cupId: number): CupSkin {
   const glassColor = gradientToGlassColor[cup.gradient] || '#fef3c7';
   const liquidGradient = gradientToLiquidGradient[cup.gradient];
 
+  // Classic White (id=1): Use liquid color for lid to match
+  const lidColor = cupId === 1 ? liquidColor : '#ffffff';
+
+
   return {
     id: `cup-${cupId}`,
     colors: {
       straw: '#fda4af', // rose-300 - same as HomeScreen
       glass: glassColor,
       liquid: liquidColor,
-      lid: '#ffffff'
+      lid: lidColor
     },
     liquidGradient
   };

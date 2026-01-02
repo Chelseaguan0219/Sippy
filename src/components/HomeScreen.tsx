@@ -49,12 +49,15 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
   useEffect(() => {
     // Check for new day and reset if needed
     drinkStore.checkNewDayAndReset();
+    // Check for new month (monthly spending will reset automatically via getCurrentMonthSpent)
+    drinkStore.checkNewMonth();
     loadData();
 
-    // Check for new day when window regains focus
+    // Check for new day/month when window regains focus
     const handleFocus = () => {
       const isNewDay = drinkStore.checkNewDayAndReset();
-      // Always reload data on focus to ensure we have the latest today's logs
+      const isNewMonth = drinkStore.checkNewMonth();
+      // Always reload data on focus to ensure we have the latest data
       loadData();
     };
 
@@ -89,7 +92,7 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
     // Get colors from liquidGradient or fallback to safe pastel colors
     const bgFrom = currentSkin.liquidGradient?.from ?? currentSkin.colors.liquid ?? '#fef3c7';
     const bgTo = currentSkin.liquidGradient?.to ?? currentSkin.colors.glass ?? '#fef3c7';
-    
+
     // Convert hex to rgba with alpha for soft gradient
     const hexToRgba = (hex: string, alpha: string) => {
       // Handle 3-digit hex
@@ -118,14 +121,14 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
 
   const handleAddDrink = (type: 'coffee' | 'bubble' | 'other', price: number, name?: string, customName?: string, date?: string) => {
     const logType = type === 'coffee' ? 'COFFEE' : type === 'bubble' ? 'BUBBLE' : 'OTHER';
-    
+
     // Calculate total spending after adding this drink
     const totalSpendingAfter = monthSpent + price;
     const isOverBudget = monthlyBudget && monthlyBudget > 0 && totalSpendingAfter > monthlyBudget;
-    
+
     // Determine coin reward: 20 if over budget, 100 if within budget
     const coinReward = isOverBudget ? 20 : 100;
-    
+
     drinkStore.addLog({
       type: logType,
       amount: price,
@@ -133,10 +136,9 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
       name: type !== 'other' ? name : undefined,
       customName: type === 'other' ? customName : undefined
     });
-    
     // Add coins based on budget status
     coinStore.addCoins(coinReward);
-    
+
     // Show toast with appropriate message
     toast.success(`You've got ${coinReward} coins!`, {
       icon: (
@@ -168,7 +170,7 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
       return '#10b981'; // emerald-500 or use '#06b6d4' for cyan
     } else if (progressPercent <= 100) {
       // Warning: orange
-      return '#F1C818'; 
+      return '#F1C818';
     } else {
       // Danger: red
       return '#f97316'; // red-500
@@ -179,8 +181,8 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
   const displayWidth = Math.min(progressPercent, 100);
 
   return (
-    <div className="h-full flex flex-col px-8 py-6 relative bg-transparent">
-      {/* Top Bar - Left: Total Balance */}
+<div className="h-full flex flex-col px-8 pt-6 pb-2 relative bg-transparent">
+{/* Top Bar - Left: Total Balance */}
       <div className="absolute top-6 left-6 z-50" style={{ marginTop: 15 }}>
         <div className="flex flex-col">
           <div
@@ -190,7 +192,7 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
             TOTAL BALANCE
           </div>
           <div className="text-2xl font-bold text-slate-900">
-            {remainingBalance !== null ? `$${remainingBalance.toFixed(2)}` : '0'}
+            {remainingBalance !== null ? `$${remainingBalance.toFixed(2)}` : '$0.00'}
           </div>
         </div>
       </div>
@@ -254,7 +256,7 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
       </div>
 
       {/* Header Title */}
-      <div className="relative text-center " style={{ marginTop: 135 }}>
+      <div className="relative text-center mb-12" style={{ marginTop: 135 }}>
         <p
           className="text-gray-400 font-normal uppercase tracking-[0.18em]"
           style={{ fontSize: '13px' }}
@@ -267,7 +269,7 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
 
 
       {/* Main Visual */}
-      <div className="flex-1 flex items-center justify-center pt-2 mb-2">
+      <div className="flex-1 flex items-center justify-center mb-12">
         <button
           onClick={() => setShowCupSelection(true)}
           className="cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200 focus:outline-none"
@@ -285,14 +287,15 @@ export function HomeScreen({ onNavigateToStore, onBackgroundChange }: HomeScreen
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-auto w-full mb-12 flex justify-center">
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-[70%] bg-gradient-to-r from-orange-400 to-pink-500 text-white text-lg font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 active:brightness-95 active:shadow-sm transition-transform hover:brightness-105"
-        >
-          + Add a drink
-        </button>
-      </div>
+      <div className="mt-auto w-full flex justify-center mb-4">
+  <button
+    onClick={() => setShowModal(true)}
+    className="w-[70%] bg-gradient-to-r from-orange-400 to-pink-500 text-white text-lg font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 active:brightness-95 active:shadow-sm transition-transform hover:brightness-105"
+  >
+    + Add a drink
+  </button>
+</div>
+
 
       {/* Modals */}
       {showModal && <AddDrinkModal onClose={() => setShowModal(false)} onAdd={handleAddDrink} />}

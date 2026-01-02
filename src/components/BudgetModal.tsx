@@ -70,7 +70,7 @@ export function BudgetModal({ onClose, onSave, currentBudget }: BudgetModalProps
 
         {/* Quick Chips */}
         <div className="mb-6">
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
             {[50, 100, 150, 200].map((value) => (
               <button
                 key={value}

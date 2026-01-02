@@ -18,6 +18,9 @@ export function OverviewScreen() {
   const [monthSpent, setMonthSpent] = useState(0);
 
   useEffect(() => {
+    // Check for new month (monthly spending will reset automatically via getCurrentMonthSpent)
+    drinkStore.checkNewMonth();
+    
     const loadLogs = () => {
       setLogs(drinkStore.getLogs());
       setMonthlyBudget(budgetStore.getMonthlyBudget());
@@ -38,6 +41,8 @@ export function OverviewScreen() {
 
   // Update logs when component mounts (in case navigation happens)
   useEffect(() => {
+    // Check for new month
+    drinkStore.checkNewMonth();
     setLogs(drinkStore.getLogs());
     setMonthlyBudget(budgetStore.getMonthlyBudget());
     setMonthSpent(drinkStore.getCurrentMonthSpent());

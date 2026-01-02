@@ -1,6 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { CupSkin } from '../types';
 
+// Helper function to darken a hex color by blending toward black
+function darkenHex(hex: string, amount: number = 0.10): string {
+  // Remove # if present
+  const cleanHex = hex.replace('#', '');
+
+  // Handle both #RRGGBB and #RGB formats
+  let r: number, g: number, b: number;
+  if (cleanHex.length === 3) {
+    r = parseInt(cleanHex[0] + cleanHex[0], 16);
+    g = parseInt(cleanHex[1] + cleanHex[1], 16);
+    b = parseInt(cleanHex[2] + cleanHex[2], 16);
+  } else {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  }
+
+  // Blend toward black
+  r = Math.round(r * (1 - amount));
+  g = Math.round(g * (1 - amount));
+  b = Math.round(b * (1 - amount));
+
+  // Convert back to hex
+  const toHex = (n: number) => {
+    const hex = n.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Helper function to lighten a hex color by blending toward white
+function lightenHex(hex: string, amount: number = 0.20): string {
+  // Remove # if present
+  const cleanHex = hex.replace('#', '');
+
+  // Handle both #RRGGBB and #RGB formats
+  let r: number, g: number, b: number;
+  if (cleanHex.length === 3) {
+    r = parseInt(cleanHex[0] + cleanHex[0], 16);
+    g = parseInt(cleanHex[1] + cleanHex[1], 16);
+    b = parseInt(cleanHex[2] + cleanHex[2], 16);
+  } else {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  }
+
+  // Blend toward white
+  r = Math.round(r + (255 - r) * amount);
+  g = Math.round(g + (255 - g) * amount);
+  b = Math.round(b + (255 - b) * amount);
+
+  // Convert back to hex
+  const toHex = (n: number) => {
+    const hex = n.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 interface KawaiiCupProps {
   fillLevel: number; // 0 to 1
   skin: CupSkin;
@@ -80,12 +142,13 @@ export const KawaiiCup: React.FC<KawaiiCupProps> = ({
   const hasLiquidGradient = Boolean(skin.liquidGradient);
   const lidGradientId = `lidGradient-${skin.id}-${size}`;
   const hasLidGradient = hasLiquidGradient;
+  const isClassicWhite = skin.id === 'cup-1' || skin.id === 'store-cup-1';
   const lidColor = skin.colors.lid || '#fef3c7';
   const lidInset = w * 0.1;
   const lidTopY = h * 0.1;
   const lidBottomY = h * 0.16;
   const rimHeight = stroke * 0.6;
-  const vbTop = h * 0.12;
+  const vbTop = h * 0.09;
 
 
   return (
@@ -150,6 +213,45 @@ export const KawaiiCup: React.FC<KawaiiCupProps> = ({
 
         {/* Cup Shape Definition */}
         <defs>
+          <linearGradient
+            id={`outlineTopFade-${skin.id}-${size}`}
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1={h * 0.15 - stroke}
+            x2="0"
+            y2={h * 0.15 + stroke * 5}
+          >
+            <stop offset="0%" stopColor="white" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="white" stopOpacity="1" />
+          </linearGradient>
+
+          <mask
+            id={`outlineMask-${skin.id}-${size}`}
+            maskUnits="userSpaceOnUse"
+            x="0"
+            y={-vbTop}
+            width={w}
+            height={h + vbTop * 2}
+          >
+            {/* 顶部渐变区域：压淡白边 */}
+            <rect
+              x="0"
+              y={h * 0.15 - stroke}
+              width={w}
+              height={stroke * 6}
+              fill={`url(#outlineTopFade-${skin.id}-${size})`}
+            />
+
+            {/* 其余区域：完全显示 */}
+            <rect
+              x="0"
+              y={h * 0.15 - stroke + stroke * 6}
+              width={w}
+              height={h + vbTop * 2}
+              fill="white"
+            />
+          </mask>
+
           <clipPath id={`cupClip-${skin.id}-${size}`}>
             <rect x={stroke} y={h * 0.15} width={w - stroke * 2} height={h * 0.84} rx={w * 0.2} />
           </clipPath>
@@ -161,8 +263,25 @@ export const KawaiiCup: React.FC<KawaiiCupProps> = ({
           )}
           {hasLidGradient && (
             <linearGradient id={lidGradientId} x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor={skin.liquidGradient?.from} stopOpacity="0.25" />
-              <stop offset="100%" stopColor={skin.liquidGradient?.to} stopOpacity="0.4" />
+              {isClassicWhite && skin.liquidGradient ? (
+                <>
+                  {/* bottom: almost same as liquid (tiny darken) */}
+                  <stop offset="0%" stopColor={darkenHex(skin.liquidGradient.from, 0.02)} stopOpacity="1" />
+                  {/* mid: creamy neutral */}
+                  <stop offset="55%" stopColor={lightenHex(skin.liquidGradient.to, 0.10)} stopOpacity="1" />
+                  {/* top: most creamy (more lighten + warm) */}
+                  <stop offset="100%" stopColor={lightenHex(skin.liquidGradient.to, 0.18)} stopOpacity="1" />
+                </>
+              ) : (
+
+
+                skin.liquidGradient && (
+                  <>
+                    <stop offset="0%" stopColor={lightenHex(skin.liquidGradient.from)} stopOpacity="0.8" />
+                    <stop offset="100%" stopColor={lightenHex(skin.liquidGradient.to)} stopOpacity="0.8" />
+                  </>
+                )
+              )}
             </linearGradient>
           )}
         </defs>
@@ -178,16 +297,6 @@ export const KawaiiCup: React.FC<KawaiiCupProps> = ({
           opacity="0.5"
         />
 
-        {/* Rim at cup mouth */}
-        <rect
-          x={stroke}
-          y={h * 0.15 - rimHeight / 2}
-          width={w - stroke * 2}
-          height={rimHeight}
-          rx={w * 0.15}
-          fill="white"
-          fillOpacity="0.25"
-        />
         {/* Lid */}
         <path
           d={`M ${lidInset} ${lidTopY} Q ${w / 2} ${h * 0.05} ${w - lidInset} ${lidTopY} L ${w - lidInset} ${lidBottomY} Q ${w / 2} ${h * 0.22} ${lidInset} ${lidBottomY} Z`}
@@ -273,9 +382,11 @@ export const KawaiiCup: React.FC<KawaiiCupProps> = ({
           rx={w * 0.2}
           stroke="white"
           strokeWidth={stroke}
-          strokeOpacity="0.4"
+          strokeOpacity="0.9"
           fill="none"
+          mask={`url(#outlineMask-${skin.id}-${size})`}
         />
+
 
 
 

@@ -80,10 +80,11 @@ export function CupSelectionModal({ open, onClose, onSelect }: CupSelectionModal
       <div
         ref={sheetRef}
         className="fixed bottom-0 inset-x-0 w-full
-  bg-white rounded-t-[2rem] shadow-2xl flex flex-col
-  max-h-[85vh]
-  sm:w-[480px] sm:left-1/2 sm:-translate-x-1/2 sm:right-auto sm:inset-x-auto"
+                    bg-white rounded-t-[2rem] shadow-2xl flex flex-col
+                    h-[92vh]
+                    sm:w-[480px] sm:left-1/2 sm:-translate-x-1/2 sm:right-auto sm:inset-x-auto"
         style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
           animation: prefersReducedMotion
             ? 'none'
             : 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
@@ -114,7 +115,7 @@ export function CupSelectionModal({ open, onClose, onSelect }: CupSelectionModal
           Select a cup to display on your home screen
         </p>
 
-          {/* Scrollable Body */}
+        {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto px-6 pb-[calc(env(safe-area-inset-bottom)+24px)]">
           <div className="grid grid-cols-2 gap-3">
             {ownedCupData.map((cup) => {
@@ -125,11 +126,10 @@ export function CupSelectionModal({ open, onClose, onSelect }: CupSelectionModal
                 <button
                   key={cup.id}
                   onClick={() => handleSelect(cup.id)}
-                  className={`relative bg-white rounded-xl p-3 border-2 transition-all hover:shadow-md active:scale-95 ${
-                    isSelected
+                  className={`relative bg-white rounded-xl p-3 border-2 transition-all hover:shadow-md active:scale-95 ${isSelected
                       ? 'border-orange-400 bg-orange-50'
                       : 'border-gray-100 hover:border-gray-200'
-                  }`}
+                    }`}
                 >
                   {/* Cup Preview */}
                   <div className="flex items-center justify-center mb-2">

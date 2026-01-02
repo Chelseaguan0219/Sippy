@@ -86,6 +86,29 @@ export const drinkStore = {
     return false;
   },
 
+  // Check if it's a new month
+  // Returns true if it's a new month (or first time opening)
+  checkNewMonth(): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+    
+    const LAST_MONTH_KEY = 'cup_habit_last_month';
+    const lastMonthStr = localStorage.getItem(LAST_MONTH_KEY);
+    
+    const currentMonthStr = `${currentYear}-${currentMonth}`;
+    
+    if (!lastMonthStr || lastMonthStr !== currentMonthStr) {
+      // It's a new month (or first time opening)
+      localStorage.setItem(LAST_MONTH_KEY, currentMonthStr);
+      return true;
+    }
+    
+    return false;
+  },
+
   // Get total spending for current month
   getCurrentMonthSpent(): number {
     const logs = this.getLogs();
