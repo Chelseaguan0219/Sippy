@@ -468,7 +468,13 @@ export function OverviewScreen() {
                   >
                     {/* Left: Icon */}
                     <div className="flex-shrink-0 mt-[2px]">
-                      <div className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center">
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                        category.type === 'COFFEE' 
+                          ? 'bg-orange-50' 
+                          : category.type === 'BUBBLE' 
+                          ? 'bg-pink-50' 
+                          : 'bg-blue-50'
+                      }`}>
                         {getIcon()}
                       </div>
                     </div>
